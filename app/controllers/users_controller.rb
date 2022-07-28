@@ -1,17 +1,19 @@
 class UsersController < ApplicationController
     before_action :authorize
     skip_before_action :authorize, only: [:create]
-    # rescue_from ActiveRecord::RecordInvalid with: :rescue_from_invalid_data
+    rescue_from ActiveRecord::RecordInvalid, with: :rescue_from_invalid_data
 
     def create
-        user = User.create(user_params)
+        user = User.create!(user_params)
+        session[:user_id] ||= user.id
+        render json: user, status: :created
 
-        if user.valid?
-            session[:user_id] ||= user.id
-            render json: user, status: :created
-        else
-            render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
-        end
+        # if user.valid?
+        #     session[:user_id] ||= user.id
+        #     render json: user, status: :created
+        # else
+        #     render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
+        # end
     end
 
     def show
@@ -22,7 +24,7 @@ class UsersController < ApplicationController
     private
 
     def rescue_from_invalid_data(invalid)
-        render json: {error: invalid.record.errors.full_message}, status: :unprocessable_entity
+        render json: {error: invalid.record.errors.full_messages}, status: :unprocessable_entity
     end
 
     def authorize
